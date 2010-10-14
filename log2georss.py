@@ -17,7 +17,8 @@ from PyRSS2Gen import *
     #This program is distributed in the hope that it will be useful,
     #but WITHOUT ANY WARRANTY; without even the implied warranty of
     #MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    #GNU General Public License for more details.
+    #GNU General Public License for more details. 
+    #http://www.gnu.org/licenses/
 
     #http://gitorious.org/log2georss
 
@@ -31,7 +32,6 @@ def main():
 
     # by default I will save file with cached ips in same dir
     # where the script resides
-    #
     cached_ips_file = sys.path[0] + '/' + 'ip_locations.pickle'
 
     rssitemtitle = ''
@@ -98,6 +98,9 @@ def parse_input():
         #    parser.print_help() 
     quiet = options.quiet
     logsdir = options.logsdir
+    # add final slash
+    if not logsdir.endswith('/'):
+        logsdir = logsdir + '/'
     logname = options.logname
     outputfile = options.outputfile
     timespan = options.timespan
@@ -418,7 +421,7 @@ def generate_georss(accessDict, logname, rssitemtitle, georssurl, outputfile):
 
 class GeoRSS(RSS2):
     rss_attrs = {
-        "version": "2.0",
+        "version": "1.0",
         "xmlns:geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
     }
 
