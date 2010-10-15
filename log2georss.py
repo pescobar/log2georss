@@ -237,8 +237,6 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
                     # take date from third field
                     date = f[3].strip()                                                             
                     date = date.lstrip('[')                                                       
-                    #fecha = fecha.split(':')                                                        
-                    #fecha = fecha[0] +'<br>'+ fecha[1] +':'+ fecha[2]+' GMT +2'                     
 
                 except:
                     continue
@@ -275,11 +273,8 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
                             print 'resolving lat from webservice ' + ip + ' ' +  str(tupla)
 
                     # if ip is cached I take it from known_locations
+                    # I take everything from know_locations dict excepting date
                     else:
-                        # si la ip ya la tengo en
-                        #known_location no vuelvo a hacer la consulta.
-                        # trinco todos los valores de
-                        #known_locations menos la fecha
                         lat = known_locations[ip][1]
                         lon = known_locations[ip][2]
                         city = known_locations[ip][3]
