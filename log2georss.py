@@ -1,27 +1,26 @@
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details. 
+#   http://www.gnu.org/licenses/
+
+
+#   http://gitorious.org/log2georss
+
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import optparse, sys, os, time, gzip, re, cPickle, datetime
 from urllib import urlopen
 from PyRSS2Gen import *
-#import pexpect   # this module only needed if using tac utility to parse logs.
 
 #pylint: disable-msg=C0301
-
-
-    #This program is free software: you can redistribute it and/or modify
-    #it under the terms of the GNU General Public License as published by
-    #the Free Software Foundation, either version 3 of the License, or
-    #(at your option) any later version.
-
-    #This program is distributed in the hope that it will be useful,
-    #but WITHOUT ANY WARRANTY; without even the implied warranty of
-    #MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    #GNU General Public License for more details. 
-    #http://www.gnu.org/licenses/
-
-    #http://gitorious.org/log2georss
-
 
 def main():
 
@@ -249,11 +248,6 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
         
         if not quiet:
             print 'parsing ' + filename
-
-        # use tac utility (linux ) to start parsing the
-        # log from last line
-        # this option is no longer used. now using xreverse class
-        #for line in pexpect.spawn('tac ' + filename):
 
         # use xreverse class to parse log from last line.
         # better performance than tac utility and is os independent
