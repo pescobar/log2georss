@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 #   This program is free software: you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
 #   the Free Software Foundation, either version 3 of the License, or
@@ -13,8 +16,6 @@
 #   http://gitorious.org/log2georss
 
 
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import optparse, sys, os, time, gzip, re, cPickle, datetime
 from urllib import urlopen
@@ -110,54 +111,29 @@ def parse_input():
 
 
 def get_logfiles(logsdir, logname, timespan):
-    """Returns a list of the logfiles that are needed to get the
-    connections that took place during the last 'timespan' seconds."""
+    """Returns a list of the logfiles to process"""
 
     try:
-        candidates = [filename for filename in os.listdir(logsdir) \
+        logfiles = [filename for filename in os.listdir(logsdir) \
                   if filename.startswith(logname)]
     except IOError:
         print >> sys.stderr, 'ERROR: cannot open %s' % logsdir
 
     def comp(x, y):
+        """ sort log files based on extensions (1,2...3...gz..)"""
         if x.endswith('.log'): return -1
         if y.endswith('.log'): return 1 
         n1, n2 = int(x.split('.')[2]), int(y.split('.')[2])
-        if n1 > n2: return 1                               
-        if n1 < n2: return -1                              
-        return 0                                           
-
-    candidates.sort(comp)
-
-    files = []  # list of the files that we will need
-
-    t_now = time.time()  # current time (in seconds)
-
-    for filename in candidates:
-        files.append(logsdir+filename) 
-
-        path = logsdir + filename
-
-        if filename.endswith('.gz'):
-            line = gzip.open(path).readline()
-        else:                                
-            line = open(path).readline()     
-
-        if not line:  # if the file is empty, we are finished
-            break                                            
-                                                             
-        f = line.split(None, 4)                              
-        t = time.mktime(time.strptime(f[3][1:], '%d/%b/%Y:%H:%M:%S'))
-
-        if t_now - t > timespan:  # stop adding files if they are too old
-            break                 # for the timespan we want             
+        if n1 > n2: return 1    
+        if n1 < n2: return -1    
+        return 0    
                                                                          
-    if not files:                                                        
+    if not logfiles:                                                        
         print logname + ' not found in directory ' + logsdir
-        print 'maybe too sort timespan or too old logs?'                                
         sys.exit()                                                       
-    else:                                                                
-        return files                                                     
+    else:
+        logfiles.sort(comp)
+        return logfiles                                                     
 
 def geolocalize_from_web(ip):
  
@@ -236,94 +212,90 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
     newIps = 0
 
     for filename in logfiles:
-        #parsedLines = 0
-        #print 'filename' 
-        #print filename   
-        #print 'files'    
-        #print files      
-        if filename.endswith('.gz'):
-            op = gzip.open          
-        else:                       
-            op = open               
+        # we only process uncompressed apache logs for performance. 
+        # python gzip module don´t allow seek to last line so we would have
+        # to decompress .gz log files before processing which can be quit 
+        # resource consuming. TODO: improve this
+        if not filename.endswith('.gz'):
         
-        if not quiet:
-            print 'parsing ' + filename
+            if not quiet:
+                print 'parsing ' + filename + ' with timespan ' + str(timespan)
 
-        # use xreverse class to parse log from last line.
-        # better performance than tac utility and is os independent
-        for line in xreverse(op(filename,'rt')):
+            # use xreverse class to parse log from last line.
+            # better performance than tac utility and is os independent
+            for line in xreverse(open(filename,'rt')):
 
-            f = line.split(None, 4)    
-            parsedLines += 1
-            
-            try:                       
-                ip = f[0].strip()  # the IP is the first field
-            except:                                           
-                continue                                      
+                f = line.split(None, 4)    
+                parsedLines += 1
+                
+                try:                       
+                    ip = f[0].strip()  # the IP is the first field
+                except:                                           
+                    continue                                      
 
-            try:
-                # take date from third field
-                date = f[3].strip()                                                             
-                date = date.lstrip('[')                                                       
-                #fecha = fecha.split(':')                                                        
-                #fecha = fecha[0] +'<br>'+ fecha[1] +':'+ fecha[2]+' GMT +2'                     
+                try:
+                    # take date from third field
+                    date = f[3].strip()                                                             
+                    date = date.lstrip('[')                                                       
+                    #fecha = fecha.split(':')                                                        
+                    #fecha = fecha[0] +'<br>'+ fecha[1] +':'+ fecha[2]+' GMT +2'                     
 
-            except:
-                continue
-                            
-            if ip == "-":
-                continue   
-            elif not re.match("\d+\.\d+\.\d+\.\d+",ip):
-                print filename, line             
-                continue                               
-                                                           
-            try:                                       
-                t = time.mktime(time.strptime(f[3][1:],
-                                             '%d/%b/%Y:%H:%M:%S'))
-            except ValueError:  # apache can put a wrong date entry
-                print >>sys.stderr, 'WARNING: malformed date %s' % f[3][1:]
-                continue                                                   
-            except IndexError:                                             
-                print >>sys.stderr, 'WARNING: malformed line:', f          
-                continue                                                   
+                except:
+                    continue
+                                
+                if ip == "-":
+                    continue   
+                elif not re.match("\d+\.\d+\.\d+\.\d+",ip):
+                    print filename, line             
+                    continue                               
+                                                               
+                try:                                       
+                    t = time.mktime(time.strptime(f[3][1:],
+                                                 '%d/%b/%Y:%H:%M:%S'))
+                except ValueError:  # apache can put a wrong date entry
+                    print >>sys.stderr, 'WARNING: malformed date %s' % f[3][1:]
+                    continue                                                   
+                except IndexError:                                             
+                    print >>sys.stderr, 'WARNING: malformed line:', f          
+                    continue                                                   
 
-            # be sure to add just one entry for each ip in the log
-            # in the accessDict
-            if ip not in accessDict:
+                # be sure to add just one entry for each ip in the log
+                # in the accessDict
+                if ip not in accessDict:
 
-                # if ip is not cached in known_locations dict,
-                # I ask webservice for lat,lon....
-                if ip not in known_locations:
-                    lat, lon, city, country, countryCode = geolocalize_from_web(ip)
-                    time.sleep(0.5)
-                    tupla = (date,lat,lon,city,country,countryCode)
-                    accessDict[ip] = tupla
-                    newIps += 1
-                    if not quiet:
-                        print 'resolving lat from webservice ' + ip + ' ' +  str(tupla)
+                    # if ip is not cached in known_locations dict,
+                    # I ask webservice for lat,lon....
+                    if ip not in known_locations:
+                        lat, lon, city, country, countryCode = geolocalize_from_web(ip)
+                        time.sleep(0.5)
+                        tupla = (date,lat,lon,city,country,countryCode)
+                        accessDict[ip] = tupla
+                        newIps += 1
+                        if not quiet:
+                            print 'resolving lat from webservice ' + ip + ' ' +  str(tupla)
 
-                # if ip is cached I take it from known_locations
-                else:
-                    # si la ip ya la tengo en
-                    #known_location no vuelvo a hacer la consulta.
-                    # trinco todos los valores de
-                    #known_locations menos la fecha
-                    lat = known_locations[ip][1]
-                    lon = known_locations[ip][2]
-                    city = known_locations[ip][3]
-                    country = known_locations[ip][4]
-                    countryCode = known_locations[ip][5]
-                    tupla = (date, lat, lon, city, country, countryCode)
-                    if not quiet:
-                        print 'getting info from cached known_locations ' + ip + ' ' + str(tupla)
-                    accessDict[ip] = tupla
-                    cachedIps += 1
-                    #print '***********************************'
-                    #print ip + str(tupla)
+                    # if ip is cached I take it from known_locations
+                    else:
+                        # si la ip ya la tengo en
+                        #known_location no vuelvo a hacer la consulta.
+                        # trinco todos los valores de
+                        #known_locations menos la fecha
+                        lat = known_locations[ip][1]
+                        lon = known_locations[ip][2]
+                        city = known_locations[ip][3]
+                        country = known_locations[ip][4]
+                        countryCode = known_locations[ip][5]
+                        tupla = (date, lat, lon, city, country, countryCode)
+                        if not quiet:
+                            print 'getting info from cached known_locations ' + ip + ' ' + str(tupla)
+                        accessDict[ip] = tupla
+                        cachedIps += 1
+                        #print '***********************************'
+                        #print ip + str(tupla)
 
-                # stop parsing this log when arrived to timespan
-                if t_now - t > timespan:
-                    break
+                    # stop parsing this log when arrived to timespan
+                    if t_now - t > timespan:
+                        break
 
         #print known_locations
         #print len(known_locations)
@@ -397,9 +369,9 @@ def generate_georss(accessDict, logname, rssitemtitle, georssurl, outputfile):
 
     # create georss 
     rss = GeoRSS(
-       title = "BioInfo tools access map",
-       link = "http://bioinfo.cipf.es",
-       description = "Feed showing location of the last computers accesing bioinfo tools",
+       title = "georss",
+       link = "http://gitorious.org/log2georss",
+       description = "Feed showing location of ips registered in the log",
 
        lastBuildDate = datetime.datetime.now(),
 
@@ -415,7 +387,7 @@ def generate_georss(accessDict, logname, rssitemtitle, georssurl, outputfile):
 
 class GeoRSS(RSS2):
     rss_attrs = {
-        "version": "1.0",
+        "version": "2.0",
         "xmlns:geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
     }
 
