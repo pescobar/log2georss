@@ -188,7 +188,8 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
 
     """ return a dictionary with ips as keys.
     Each ip has associated a tuple containing 
-    tool,accessDate,lat,lon,city,country """ 
+    str(day),str(hour),float(lat),float(long),str(city),str(country)
+    This is the right input for generate_georss() """ 
 
     t_now = time.time()  # current time (in seconds)
     accessDict = {} # dictionary to save accesses
@@ -234,10 +235,12 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
                     continue                                      
 
                 try:
-                    # take date from third field
+                    # take date from third field and parse day/hour
                     date = f[3].strip()                                                             
-                    date = date.lstrip('[')                                                       
-
+                    date = date.lstrip('[')                                                      
+                    #print date
+                    day = date.split(':',1)[0]
+                    hour = date.split(':',1)[1]
                 except:
                     continue
                                 
@@ -248,7 +251,7 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
                     continue                               
                                                                
                 try:                                       
-                    t = time.mktime(time.strptime(f[3][1:],
+                    t_log_line = time.mktime(time.strptime(f[3][1:],
                                                  '%d/%b/%Y:%H:%M:%S'))
                 except ValueError:  # apache can put a wrong date entry
                     print >>sys.stderr, 'WARNING: malformed date %s' % f[3][1:]
@@ -266,7 +269,7 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
                     if ip not in known_locations:
                         lat, lon, city, country, countryCode = geolocalize_from_web(ip)
                         time.sleep(0.5)
-                        tupla = (date,lat,lon,city,country,countryCode)
+                        tupla = (day,hour,lat,lon,city,country,countryCode)
                         accessDict[ip] = tupla
                         newIps += 1
                         if not quiet:
@@ -275,12 +278,12 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
                     # if ip is cached I take it from known_locations
                     # I take everything from know_locations dict excepting date
                     else:
-                        lat = known_locations[ip][1]
-                        lon = known_locations[ip][2]
-                        city = known_locations[ip][3]
-                        country = known_locations[ip][4]
-                        countryCode = known_locations[ip][5]
-                        tupla = (date, lat, lon, city, country, countryCode)
+                        lat = known_locations[ip][2]
+                        lon = known_locations[ip][3]
+                        city = known_locations[ip][4]
+                        country = known_locations[ip][5]
+                        countryCode = known_locations[ip][6]
+                        tupla = (day, hour, lat, lon, city, country, countryCode)
                         if not quiet:
                             print 'getting info from cached known_locations ' + ip + ' ' + str(tupla)
                         accessDict[ip] = tupla
@@ -289,7 +292,7 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
                         #print ip + str(tupla)
 
                     # stop parsing this log when arrived to timespan
-                    if t_now - t > timespan:
+                    if t_now - t_log_line > timespan:
                         break
 
         #print known_locations
@@ -323,8 +326,9 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
     return accessDict
 
 def generate_georss(accessDict, logname, rssitemtitle, georssurl, outputfile):
-    """ generate the georss and an entry in the georss for each
-        ip in the accessDict """
+    """ generate the georss with an entry for each ip in the accessDict
+        accessDict has ips as keys. the value for each ip has is a tuple containing 
+        str(day),str(hour),float(lat),float(long),str(city),str(country)"""
 
     # will save in this list all georssitems in the georss
     rssitems_list = []
@@ -333,13 +337,13 @@ def generate_georss(accessDict, logname, rssitemtitle, georssurl, outputfile):
     # generate an rssitem for each ip in the accessDict
     # and save it in rssitems_list
     for (key,value) in accessDict.iteritems():
-        # parse date for nice output in gmap pop-up
-        date = value[0].split(':')
-        date = date[0] +'<br>'+ date[1] +':'+ date[2]+' GMT +1'
-        city = str(value[3])
-        country = str(value[4])
-        lat = value[1]
-        lon = value[2]
+        
+        day = value[0]
+        hour = value[1]
+        lat = value[2]
+        lon = value[3]
+        city = str(value[4])
+        country = str(value[5])
 
         if rssitemtitle == '':
             title = logname
@@ -353,7 +357,7 @@ def generate_georss(accessDict, logname, rssitemtitle, georssurl, outputfile):
             title = title,
         # description is info showed in the gmap pop-up. It
         # accepts html. Now showing date + city + country
-            description= date + '<br>'+ city +'<br>'+ country,
+            description = day +'<br>'+ hour +'<br>'+ city +'<br>'+ country,
             geo_lat= lat,
             geo_lon= lon)
         # add rssitem to the list
@@ -364,9 +368,10 @@ def generate_georss(accessDict, logname, rssitemtitle, georssurl, outputfile):
 
     # create georss 
     rss = GeoRSS(
-       title = "georss",
+       title = "georss  " + logname,
        link = "http://gitorious.org/log2georss",
-       description = "Feed showing location of ips registered in the log",
+       description = "Feed showing location of ips registered in the log " +\
+       logname,
 
        lastBuildDate = datetime.datetime.now(),
 
