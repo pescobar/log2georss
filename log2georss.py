@@ -36,16 +36,16 @@ def main():
 
     rssitemtitle = ''
 
-    quiet, logsdir, logname,  outputfile, timespan, rssitemtitle, georssurl, = parse_input()
+    quiet, logsdir, logname, logtype, outputfile, timespan, rssitemtitle, georssitemlink, = parse_input()
 
     if rssitemtitle == '':
         rssitemtitle = logname 
 
     logfiles = get_logfiles(logsdir, logname, timespan)
 
-    accessDict = parse_apache_log(logfiles, timespan, cached_ips_file)
+    accessDict = parse_log(logfiles, logtype, timespan, cached_ips_file)
 
-    generate_georss(accessDict, logname, rssitemtitle, georssurl, outputfile) 
+    generate_georss(accessDict, logname, logtype, rssitemtitle, georssitemlink, outputfile) 
 
 
 def parse_input():
@@ -53,40 +53,50 @@ def parse_input():
     
     """parse input args and show help"""
     
-    desc = """ Generate georss files from apache logs """ 
+    desc = """ Generates georss files from logs  """ 
     parser = optparse.OptionParser("usage: %prog [-q] [-d logsdir] [-l logname]"
-                                   "[-o output_georss_file.xml]",description=desc)
+                                   " [-o output_georss.xml] [-t timespan]",description=desc)
     
     parser.add_option("-q", action="store_true", dest="quiet", default=False,
                      help="run silently")
 
     parser.add_option("-d", "--dir", dest="logsdir",
                      default="/var/log/apache2/", type="string",
-                     help="directory to look for apache logs. Default is "
+                     help="directory to look for logs. Default is "
                      "/var/log/apache2/")
 
     parser.add_option("-l", "--logname", dest="logname",
                       default="access.log", type="string",
-                      help="apache log to parse. Default is "
+                      help="log to parse. Default is "
                       "access.log")
 
+    parser.add_option('-L', '--logtype',
+                      type='choice',
+                      action='store',
+                      dest='logtype',
+                      choices=['apache', 'ssh',],
+                      default='apache',
+                      help='select apache or ssh. Default is apache',)
+ 
+
+    parser.add_option("-t", "--timespan", dest="timespan", default=3600,
+                     type="int", help="set timespan in seconds. Default is"
+                     " 3600 (1 hour)")
+    
     parser.add_option("-o", "--output", dest="outputfile",
                      default="/tmp/georss.xml", type="string",
                      help="ouput georss file. Default is"
                      "/tmp/georss.xml")
 
-    parser.add_option("-t", "--timespan", dest="timespan", default=3600,
-                     type="int", help="set timespan in seconds. Default is"
-                     " 3600 (1 hour)")
 
     parser.add_option("-T", "--title", dest="rssitemtitle",
                       default="", type="string",
                       help="title for google maps pop-ups")
  
 
-    parser.add_option("-u", "--url", dest="georssurl",
+    parser.add_option("-u", "--url", dest="georssitemlink",
                       default="", type="string",
-                      help="url for google maps pop-ups title")
+                      help="link for google maps pop-ups title")
 
 
 
@@ -102,11 +112,12 @@ def parse_input():
     if not logsdir.endswith('/'):
         logsdir = logsdir + '/'
     logname = options.logname
+    logtype = options.logtype
     outputfile = options.outputfile
     timespan = options.timespan
     rssitemtitle = options.rssitemtitle
-    georssurl = options.georssurl
-    return quiet, logsdir, logname, outputfile, timespan, rssitemtitle, georssurl
+    georssitemlink = options.georssitemlink
+    return quiet, logsdir, logname, logtype, outputfile, timespan, rssitemtitle, georssitemlink
 
 
 
@@ -184,7 +195,7 @@ def geolocalize_from_web(ip):
 
     return latitude, longitude, city, country, countryCode
 
-def parse_apache_log(logfiles, timespan, cached_ips_file):
+def parse_log(logfiles, logtype, timespan, cached_ips_file):
 
     """ return a dictionary with ips as keys.
     Each ip has associated a tuple containing 
@@ -225,41 +236,60 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
             # use xreverse class to parse log from last line.
             # better performance than tac utility and is os independent
             for line in xreverse(open(filename,'rt')):
-
-                f = line.split(None, 4)    
+                    
                 parsedLines += 1
-                
-                try:                       
-                    ip = f[0].strip()  # the IP is the first field
-                except:                                           
-                    continue                                      
 
-                try:
-                    # take date from third field and parse day/hour
-                    date = f[3].strip()                                                             
-                    date = date.lstrip('[')                                                      
-                    #print date
-                    day = date.split(':',1)[0]
-                    hour = date.split(':',1)[1]
-                except:
-                    continue
-                                
+                if logtype == 'apache':
+                    f = line.split(None, 4)    
+                    
+                    try:                       
+                        ip = f[0].strip()  # the IP is the first field
+                    except:                                           
+                        continue                                      
+
+                    try:
+                        # take date from third field and parse day/hour
+                        date = f[3].strip()                                                             
+                        # we get date in format %d/%b/%Y:%H:%M:%S to take t_log_line
+                        date = date.lstrip('[')                                                      
+                        day = date.split(':',1)[0]
+                        hour = date.split(':',1)[1]
+                    except:
+                        continue
+                                    
+                if logtype == 'ssh':
+                    # only process lines like
+                    # Oct 14 00:26:26 raphael sshd[25210]: Accepted password for user from 127.0.0.1
+                    if (re.search("Accepted", line)):
+                        # no year in auth.log so we take current year
+                        year = datetime.datetime.now().year
+                        ip = line.split(' ')[10]
+                        day = line.split(' ')[1] + '/' + line.split(' ')[0] + '/' + str(year)
+                        hour = line.split(' ')[2]
+                        # we get date in format %d/%b/%Y:%H:%M:%S to take t_log_line
+                        date = day + ':' + hour
+                        sshuser = line.split(' ')[8]
+                    else:
+                        continue
+                
+
                 if ip == "-":
                     continue   
                 elif not re.match("\d+\.\d+\.\d+\.\d+",ip):
+                    print '\n malformed ip:'
                     print filename, line             
                     continue                               
                                                                
                 try:                                       
-                    t_log_line = time.mktime(time.strptime(f[3][1:],
+                    t_log_line = time.mktime(time.strptime(date,
                                                  '%d/%b/%Y:%H:%M:%S'))
                 except ValueError:  # apache can put a wrong date entry
-                    print >>sys.stderr, 'WARNING: malformed date %s' % f[3][1:]
+                    print >>sys.stderr, 'WARNING: malformed date %s' % date
                     continue                                                   
                 except IndexError:                                             
                     print >>sys.stderr, 'WARNING: malformed line:', f          
-                    continue                                                   
-
+                    continue       
+                    
                 # be sure to add just one entry for each ip in the log
                 # in the accessDict
                 if ip not in accessDict:
@@ -269,11 +299,10 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
                     if ip not in known_locations:
                         lat, lon, city, country, countryCode = geolocalize_from_web(ip)
                         time.sleep(0.5)
-                        tupla = (day,hour,lat,lon,city,country,countryCode)
-                        accessDict[ip] = tupla
                         newIps += 1
                         if not quiet:
-                            print 'resolving lat from webservice ' + ip + ' ' +  str(tupla)
+                            print 'resolving lat from webservice ' + ip +\
+                            ' '+day+' '+hour+' '+str(lat)+' '+str(lon)+' '+ city+' '+country
 
                     # if ip is cached I take it from known_locations
                     # I take everything from know_locations dict excepting date
@@ -283,13 +312,17 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
                         city = known_locations[ip][4]
                         country = known_locations[ip][5]
                         countryCode = known_locations[ip][6]
-                        tupla = (day, hour, lat, lon, city, country, countryCode)
-                        if not quiet:
-                            print 'getting info from cached known_locations ' + ip + ' ' + str(tupla)
-                        accessDict[ip] = tupla
                         cachedIps += 1
-                        #print '***********************************'
-                        #print ip + str(tupla)
+                        if not quiet:
+                            print 'getting info from cached known_locations ' + ip +\
+                            ' '+day+' '+hour+' '+str(lat)+' '+str(lon)+' '+ city+' '+country
+
+
+                    if logtype == 'apache':
+                        tupla = (day, hour, lat, lon, city, country, countryCode)
+                    if logtype == 'ssh':
+                        tupla = (day, hour, lat, lon, city, country, countryCode,sshuser)
+                    accessDict[ip] = tupla
 
                     # stop parsing this log when arrived to timespan
                     if t_now - t_log_line > timespan:
@@ -325,12 +358,14 @@ def parse_apache_log(logfiles, timespan, cached_ips_file):
     
     return accessDict
 
-def generate_georss(accessDict, logname, rssitemtitle, georssurl, outputfile):
+
+def generate_georss(accessDict, logname, logtype, rssitemtitle, georssitemlink, outputfile):
     """ generate the georss with an entry for each ip in the accessDict
         accessDict has ips as keys. the value for each ip has is a tuple containing 
         str(day),str(hour),float(lat),float(long),str(city),str(country)"""
 
     # will save in this list all georssitems in the georss
+    
     rssitems_list = []
     title = ''
 
@@ -344,20 +379,30 @@ def generate_georss(accessDict, logname, rssitemtitle, georssurl, outputfile):
         lon = value[3]
         city = str(value[4])
         country = str(value[5])
+        countryCode = str(value[6])
+        if logtype == 'ssh':
+            sshuser = value[7]
 
         if rssitemtitle == '':
             title = logname
         
-        if georssurl == '':
+        if georssitemlink == '':
             title = logname
         else:
-            title = '<a href=\"'+georssurl+'\" target=\"_blank\">'+rssitemtitle+'</a>'
+            title = '<a href=\"'+georssitemlink+'\" target=\"_blank\">'+rssitemtitle+'</a>'
+
+
+        if logtype == 'apache':
+            georssitemdescription = day +'<br>'+ hour +'<br>'+ city +'<br>'+ country
+        if logtype == 'ssh':
+            georssitemdescription = sshuser+'<br>'+day+'<br>'+ hour +'<br>'+ city +'<br>'+ country
+
             
         newgeorss = GeoRSSItem(
             title = title,
         # description is info showed in the gmap pop-up. It
         # accepts html. Now showing date + city + country
-            description = day +'<br>'+ hour +'<br>'+ city +'<br>'+ country,
+            description = georssitemdescription,
             geo_lat= lat,
             geo_lon= lon)
         # add rssitem to the list
