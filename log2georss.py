@@ -430,11 +430,15 @@ def generate_georss(accessDict, logname, logtype, rssitemtitle, georssitemlink, 
     except:
         print ' problem saving georss'        
 
+from PyRSS2Gen import *
+from PyRSS2Gen import _opt_element
+
 
 class GeoRSS(RSS2):
     rss_attrs = {
         "version": "2.0",
         "xmlns:geo": "http://www.w3.org/2003/01/geo/wgs84_pos#",
+        "xmlns:ymaps": "http://api.maps.yahoo.com/Maps/V2/AnnotatedMaps.xsd"
     }
 
     def publish_extensions(self, handler):
@@ -442,15 +446,45 @@ class GeoRSS(RSS2):
             _opt_element(handler, "geo:lat", self.geo_lat)
         if hasattr(self, 'geo_long'):
             _opt_element(handler, "geo:long", self.geo_long)
+        if hasattr(self, 'ymaps_ZoomLevel'):
+            _opt_element(handler, "ymaps:ZoomLevel", self.ymaps_ZoomLevel)
+        if hasattr(self, 'ymaps_IntlCode'):
+            _opt_element(handler, "ymaps:IntlCode", self.ymaps_IntlCode)
+        if hasattr(self, 'ymaps_Groups'):
+            _opt_element(handler, "ymaps:Groups", self.ymaps_Groups)
 
 
 class GeoRSSItem(RSSItem):
     def __init__(self, **args ):
+        # Recibo todos los argumentos como un dicctionario (eso es lo
+        # que hacen los **). si le has pasado un argumento geo_lat,
+        # geo_lon o lo que sea, lo guarda como variable de la clases y
+        # lo elimina del diccionario de argumentos. Despues de
+        # procesar tus variables custom, args contiene solo las
+        # variables normables de un RSS Item, asi que llamas al
+        # __init__ de la clase madre con el diccionario descompuesto
+        # como argumentos de funcion (de nuevo con los **)
+
+        # Cambia el None por el valor por defecto que quieres tener en
+        # cada varibale en caso de que no se las pases
+
+        # Para cada argumento nuevo que recibas en la clase tienes que
+        # generar un elemento RSS que tenga el metodo "publish". Yo lo
+        # he averiguado leyendo el codigo del modulo
+        # PyRSSGen. IntElement sirve para cualquier numero.
         self.geo_lat = IntElement("geo:lat", args.pop("geo_lat", None))
         self.geo_lon = IntElement("geo:long", args.pop("geo_lon", None))
 
         RSSItem.__init__(self, **args)
 
+    def publish_extensions(self, handler):
+        # Aqui tienes que poner todo los argumentos de la clase que
+        # quieras publicar en el XML del RSS.
+
+        if hasattr(self, 'geo_lat'):
+            _opt_element(handler, "geo:lat", self.geo_lat)
+            if hasattr(self, 'geo_lon'):
+                _opt_element(handler, "geo:long", self.geo_lon)
 
 # xreverse class - copyright 2004 Michael D. Stenner <mstenner@ece.arizona.edu>
 # license: LGPL
@@ -517,3 +551,4 @@ if __name__ == '__main__':
     #cProfile.run(main())
     main()
       
+
