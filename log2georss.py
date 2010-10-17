@@ -41,9 +41,9 @@ def main():
     if rssitemtitle == '':
         rssitemtitle = logname 
 
-    logfiles = get_logfiles(logsdir, logname, timespan)
+    logfiles = get_logfiles(logsdir, logname)
 
-    accessDict = parse_log(logfiles, logtype, timespan, cached_ips_file)
+    accessDict = parse_log(logsdir, logfiles, logtype, timespan, cached_ips_file)
 
     generate_georss(accessDict, logname, logtype, rssitemtitle, georssitemlink, outputfile) 
 
@@ -121,7 +121,7 @@ def parse_input():
 
 
 
-def get_logfiles(logsdir, logname, timespan):
+def get_logfiles(logsdir, logname):
     """Returns a list of the logfiles to process"""
 
     try:
@@ -195,7 +195,7 @@ def geolocalize_from_web(ip):
 
     return latitude, longitude, city, country, countryCode
 
-def parse_log(logfiles, logtype, timespan, cached_ips_file):
+def parse_log(logsdir, logfiles, logtype, timespan, cached_ips_file):
 
     """ return a dictionary with ips as keys.
     Each ip has associated a tuple containing 
@@ -224,6 +224,7 @@ def parse_log(logfiles, logtype, timespan, cached_ips_file):
     newIps = 0
 
     for filename in logfiles:
+        filepath = logsdir + filename
         # we only process uncompressed apache logs for performance. 
         # python gzip module don´t allow seek to last line so we would have
         # to decompress .gz log files before processing which can be quit 
@@ -231,11 +232,11 @@ def parse_log(logfiles, logtype, timespan, cached_ips_file):
         if not filename.endswith('.gz'):
         
             if not quiet:
-                print 'parsing ' + filename + ' with timespan ' + str(timespan)
+                print 'parsing ' + filepath + ' with timespan ' + str(timespan)
 
             # use xreverse class to parse log from last line.
             # better performance than tac utility and is os independent
-            for line in xreverse(open(filename,'rt')):
+            for line in xreverse(open(filepath,'rt')):
                     
                 parsedLines += 1
 

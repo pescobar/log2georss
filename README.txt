@@ -11,5 +11,10 @@ Usage
 ###################
 execute ./log2georss.py -h for help
 
+examples:
+
+	./log2georss.py -d /var/log -l auth.log -L ssh -o /tmp/test_ssh.xml -t 5400000
+	
+
 
 
