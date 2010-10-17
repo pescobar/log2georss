@@ -287,9 +287,6 @@ def parse_log(logsdir, logfiles, logtype, timespan, cached_ips_file):
                 except ValueError:  # apache can put a wrong date entry
                     print >>sys.stderr, 'WARNING: malformed date %s' % date
                     continue                                                   
-                except IndexError:                                             
-                    print >>sys.stderr, 'WARNING: malformed line:', f          
-                    continue       
                     
                 # be sure to add just one entry for each ip in the log
                 # in the accessDict
@@ -298,9 +295,9 @@ def parse_log(logsdir, logfiles, logtype, timespan, cached_ips_file):
                     # if ip is not cached in known_locations dict,
                     # I ask webservice for lat,lon....
                     if ip not in known_locations:
+                        newIps += 1
                         lat, lon, city, country, countryCode = geolocalize_from_web(ip)
                         time.sleep(0.5)
-                        newIps += 1
                         if not quiet:
                             print 'resolving lat from webservice ' + ip +\
                             ' '+day+' '+hour+' '+str(lat)+' '+str(lon)+' '+ city+' '+country
@@ -320,10 +317,11 @@ def parse_log(logsdir, logfiles, logtype, timespan, cached_ips_file):
 
 
                     if logtype == 'apache':
-                        tupla = (day, hour, lat, lon, city, country, countryCode)
+                        ipdata = (day, hour, lat, lon, city, country, countryCode)
                     if logtype == 'ssh':
-                        tupla = (day, hour, lat, lon, city, country, countryCode,sshuser)
-                    accessDict[ip] = tupla
+                        ipdata = (day, hour, lat, lon, city, country, countryCode,sshuser)
+                    
+                    accessDict[ip] = ipdata
 
                     # stop parsing this log when arrived to timespan
                     if t_now - t_log_line > timespan:
