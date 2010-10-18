@@ -1,6 +1,7 @@
 
 log2georss v0.01
 http://gitorious.org/log2georss
+pablo AATT barrabin D0T org
 ####################
 
 Script to parse a log file and generate a georss file showing latitude, longitude, country and city of ips registered in the log. Supports apache access.log and sshd auth.log
@@ -23,7 +24,14 @@ examples:
 
 	$> ./log2georss.py -d /var/log -l auth.log -L ssh -o /tmp/test_ssh.xml -t 5400000
 
-you can show your georss in goole maps by hosting it in a web server and pasting the georss url in google map search bar.
+The easiest way to see your georss in google maps is by hosting it in a web server and pasting the georss url in google map search bar.
+
+You also have some basic examples of showing your georss in google maps or openlayers in "html-example" directory. You will need to add your google maps api key to the file "google-maps-georss.html" to make it work. For more complex maps check google maps api docs or openlayers docs.
+http://code.google.com/apis/maps/signup.html
+
+You can also integrate your georss in drupal by using the "mapping kit" module.
+http://drupal.org/project/mappingkit
+
 
 
 TODO

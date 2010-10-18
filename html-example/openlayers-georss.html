@@ -1,0 +1,41 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>OpenLayers GeoRSS Marker Example</title>
+    <link rel="stylesheet" href="style2.css" type="text/css" />
+    <link rel="stylesheet" href="style.css" type="text/css" />
+    <script src="OpenLayers.js"></script>
+    <script type="text/javascript">
+        var map, layer;
+
+        OpenLayers.ProxyHost = "/proxy/?url=";
+        function init(){
+            map = new OpenLayers.Map('map', {maxResolution:'auto'});
+            layer = new OpenLayers.Layer.WMS( "OpenLayers WMS",
+                "http://vmap0.tiles.osgeo.org/wms/vmap0", {layers: 'basic'} );
+            map.addLayer(layer);
+            map.setCenter(new OpenLayers.LonLat(0, 0), 0);
+            map.addControl(new OpenLayers.Control.LayerSwitcher());
+            var newl = new OpenLayers.Layer.GeoRSS( 'GeoRSS', 'georss/georss.xml');
+	    map.addLayer(newl);
+
+	    var yelp2 = new OpenLayers.Icon("img/marker-green.png", new OpenLayers.Size(20,29));
+            var newl2 = new OpenLayers.Layer.GeoRSS( 'Yelp GeoRSS', 'georss/yelp-georss.xml', {'icon':yelp2});
+	    map.addLayer(newl);
+	    map.addLayer(newl2);
+        }
+    </script>
+  </head>
+  <body onload="init()">
+    <h1 id="title">GeoRSS Marker Example</h1>
+
+    <div id="tags"></div>
+
+    <p id="shortdesc">
+        Demonstrate loading a GeoRSS feed using the GeoRSS parser.
+    </p>
+
+    <div id="map" class="mediummap"></div>
+
+    <div id="docs"></div>
+  </body>
+</html>

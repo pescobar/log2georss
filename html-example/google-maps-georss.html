@@ -1,0 +1,55 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>OpenLayers Google with Overlay Example</title>
+    <link rel="stylesheet" href="style2.css" type="text/css" />
+    <link rel="stylesheet" href="style.css" type="text/css" />
+    <script src='http://maps.google.com/maps?file=api&amp;v=2&amp;key=PUT_YOUR_GOOGLE_MAPS_API_KEY_HERE'></script>
+    <script src="OpenLayers.js"></script>
+    <script type="text/javascript">
+        var map;
+
+        function init(){
+            map = new OpenLayers.Map('map');
+
+            var satellite = new OpenLayers.Layer.Google(
+                "Google Satellite" , {type: G_SATELLITE_MAP}
+		
+		);
+
+	    
+	    var yelp = new OpenLayers.Icon("img/marker-gold.png", new OpenLayers.Size(20,29));
+	    var newl = new OpenLayers.Layer.GeoRSS( 'Yelp GeoRSS', 'georss/yelp-georss.xml', {'icon':yelp});
+	    
+	    var yelp2 = new OpenLayers.Icon("img/marker-green.png", new OpenLayers.Size(20,29));
+	    var newl2 = new OpenLayers.Layer.GeoRSS( 'GeoRSS', 'georss/georss.xml', {'icon':yelp2});
+
+
+            map.addLayers([satellite, newl, newl2]);
+
+	    map.addLayer(newl2);
+	    map.addLayer(newl);
+
+	    map.setCenter(new OpenLayers.LonLat(0,0), 1);
+            map.addControl( new OpenLayers.Control.LayerSwitcher() );
+	}
+
+    </script>
+  </head>
+  <body onload="init()">
+    <h1 id="title">Openlayer Google map with georss</h1>
+
+    <div id="tags"></div>
+
+    <p id="shortdesc">
+        Demonstrate a Google basemap using georss
+    </p>
+
+    <div id="map" class="mediummap"></div>
+
+    <div id="docs">
+	    <br><br>
+	    You have to edit this html file and  add your google maps api key for this map to work.<br> <br>
+	    <a href="http://code.google.com/apis/maps/signup.html"> http://code.google.com/apis/maps/signup.html</a>
+    </div>
+  </body>
+</html>
