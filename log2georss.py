@@ -20,6 +20,7 @@
 import optparse, sys, os, time, gzip, re, cPickle, datetime
 from urllib import urlopen
 from PyRSS2Gen import *
+from PyRSS2Gen import _opt_element
 
 #pylint: disable-msg=C0301
 
@@ -163,7 +164,7 @@ def geolocalize_from_web(ip):
 
     try:
         geoinfo = urlopen(url).readlines() 
-        print geoinfo
+        #print geoinfo
     except IOError:
         print >>sys.stderr, 'ERROR: cannot open url %s' % url
         return 0, 0, '', '', ''
@@ -332,8 +333,8 @@ def parse_log(logsdir, logfiles, logtype, timespan, cached_ips_file):
 
     if not quiet:
         print str(parsedLines) + ' parsed lines from ' + filename
-        print 'retrieved ' + str(len(known_locations)) + ' ips previously cached'\
-                + ' from ' + cached_ips_file
+        print 'I have ' + str(len(known_locations)) + ' ips previously cached'\
+                + ' in ' + cached_ips_file
         print str(len(accessDict)) + ' different ips parsed in this log. so one entry in the rss for each one'
         print str(newIps) + ' ip are new, so geolocalized by webservice'
         print str(cachedIps) + ' were previously cached'
@@ -424,12 +425,9 @@ def generate_georss(accessDict, logname, logtype, rssitemtitle, georssitemlink, 
     # write georss file to disk
     try:
         print ' saving georss file to ' + outputfile
-        rss.write_xml(open(outputfile, "w"))
+        rss.write_xml(open(outputfile, "w"), "utf-8")
     except:
         print ' problem saving georss'        
-
-from PyRSS2Gen import *
-from PyRSS2Gen import _opt_element
 
 
 class GeoRSS(RSS2):
