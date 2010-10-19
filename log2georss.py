@@ -397,7 +397,7 @@ def generate_georss(accessDict, logname, logtype, rssitemtitle, georssitemlink, 
             georssitemdescription = sshuser+'<br>'+day+'<br>'+ hour +'<br>'+ city +'<br>'+ country
 
             
-        newgeorss = GeoRSSItem(
+        newgeorssitem = GeoRSSItem(
             title = title,
         # description is info showed in the gmap pop-up. It
         # accepts html. Now showing date + city + country
@@ -405,7 +405,7 @@ def generate_georss(accessDict, logname, logtype, rssitemtitle, georssitemlink, 
             geo_lat= lat,
             geo_lon= lon)
         # add rssitem to the list
-        rssitems_list.append(newgeorss)
+        rssitems_list.append(newgeorssitem)
 
     #print 'rssitem list'
     #print len(rssitems_list)
