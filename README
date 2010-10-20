@@ -37,7 +37,6 @@ http://drupal.org/project/mappingkit
 TODO
 ###################
 Support gzip files. Python gzip modules doesn´t alow to seek to last position to start parsing last line and decompress full apache logs can be quite resource consuming.
-Handle correctly UTF8 string from ipinfodb.com to solve wrong accents.
 
 
 Feedback is welcome.
