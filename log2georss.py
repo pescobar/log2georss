@@ -16,7 +16,6 @@
 #   http://gitorious.org/log2georss
 
 
-
 import optparse, sys, os, time, gzip, re, cPickle, datetime
 from urllib import urlopen
 from PyRSS2Gen import *
@@ -29,6 +28,17 @@ def main():
     """ main function """
     
     global quiet
+
+    # register at ipinfodb.com to get your api key
+    global ipinfo_db_api_key
+    ipinfo_db_api_key = ''
+    
+    if ipinfo_db_api_key == '':
+        print '''\n \tipinfodb.com api key is not defined
+        please register at ipinfodb.com and set the 
+        ipinfo_db_api_key var in main() function
+                '''
+        sys.exit()                                                       
 
 
     # by default I will save file with cached ips in same dir
@@ -161,8 +171,7 @@ def geolocalize_from_web(ip):
 
     # url to ask ip2location.com
     #url='http://ipinfodb.com/ip_query.php?ip=%s&output=raw&timezone=false' % ip
-    url='http://api.ipinfodb.com/v3/ip-city/?key=f2307484573f3f2e0bf7091510aa723e5146a8ef6043fc1a888f4d412a735e53&ip=%s' % ip
-
+    url='http://api.ipinfodb.com/v3/ip-city/?key=%s&ip=%s' % (ipinfo_db_api_key,ip)
     try:
         geoinfo = urlopen(url).readlines() 
         #print geoinfo
