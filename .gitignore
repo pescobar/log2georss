@@ -2,3 +2,4 @@ ip_locations.pickle
 apache.log*
 *.xml
 *.swp
+*.log

@@ -5,7 +5,9 @@ pablo AATT barrabin D0T org
 ####################
 
 Script to parse a log file and generate a georss file showing latitude, longitude, country and city of ips registered in the log. Supports apache access.log and sshd auth.log
+
 Geolocation info is taken from http://ipinfodb.com 
+Since ipinfodb.com api change you need to register on the website to get an api key. Once registered on the website and obtained your api key edit the script log2georss.py and set the global var ipinfo_db_api_key with your key
 
 
 Install		
