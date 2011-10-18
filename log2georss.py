@@ -160,7 +160,8 @@ def geolocalize_from_web(ip):
     #url = 'http://api.hostip.info/get_html.php?ip=%s&position=true' % ip
 
     # url to ask ip2location.com
-    url='http://ipinfodb.com/ip_query.php?ip=%s&output=raw&timezone=false' % ip
+    #url='http://ipinfodb.com/ip_query.php?ip=%s&output=raw&timezone=false' % ip
+    url='http://api.ipinfodb.com/v3/ip-city/?key=f2307484573f3f2e0bf7091510aa723e5146a8ef6043fc1a888f4d412a735e53&ip=%s' % ip
 
     try:
         geoinfo = urlopen(url).readlines() 
@@ -170,22 +171,22 @@ def geolocalize_from_web(ip):
         return 0, 0, '', '', ''
 
 
-    if geoinfo[0].split(",")[1].find("OK")!=-1 :
+    if geoinfo[0].split(";")[0].find("OK")!=-1 :
     
         try:
-            countryCode = (geoinfo[0].split(",")[2])
+            countryCode = (geoinfo[0].split(";")[3])
             if len(countryCode) == 0:
                 countryCode = ''
             
-            country = (geoinfo[0].split(",")[3])
+            country = (geoinfo[0].split(";")[4])
             if len(country) == 0:
                 country = ''
-            city = (geoinfo[0].split(",")[6])
+            city = (geoinfo[0].split(";")[6])
             if len(city) == 0:
                 city = ''
 
-            latitude = float(geoinfo[0].split(",")[8])
-            longitude = float(geoinfo[0].split(",")[9])
+            latitude = float(geoinfo[0].split(";")[8])
+            longitude = float(geoinfo[0].split(";")[9])
         except:
             print >>sys.stderr, 'WARNING: Cannot find coordinates of IP', ip
             return 0, 0, '','', ''
