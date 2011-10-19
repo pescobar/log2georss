@@ -31,7 +31,7 @@ def main():
 
     # register at ipinfodb.com to get your api key
     global ipinfo_db_api_key
-    ipinfo_db_api_key = ''
+    ipinfo_db_api_key = 'f2307484573f3f2e0bf7091510aa723e5146a8ef6043fc1a888f4d412a735e53'
     
     if ipinfo_db_api_key == '':
         print '''\n \tipinfodb.com api key is not defined
@@ -272,15 +272,15 @@ def parse_log(logsdir, logfiles, logtype, timespan, cached_ips_file):
                 if logtype == 'ssh':
                     # only process lines like
                     # Oct 14 00:26:26 raphael sshd[25210]: Accepted password for user from 127.0.0.1
-                    if (re.search("Accepted", line)):
+                    if (re.search("Accepted", line) and re.search("sshd",line)):
                         # no year in auth.log so we take current year
                         year = datetime.datetime.now().year
-                        ip = line.split(' ')[10]
-                        day = line.split(' ')[1] + '/' + line.split(' ')[0] + '/' + str(year)
-                        hour = line.split(' ')[2]
+                        ip = line.split('from')[1].split()[0]
+                        day = line.split('from')[0].split()[1] + '/' + line.split('from')[0].split()[0] + '/' + str(year)
+                        hour = line.split('from')[0].split()[2]
                         # we get date in format %d/%b/%Y:%H:%M:%S to take t_log_line
                         date = day + ':' + hour
-                        sshuser = line.split(' ')[8]
+                        sshuser = line.split('from')[0].split()[8]
                     else:
                         continue
                 
@@ -289,6 +289,7 @@ def parse_log(logsdir, logfiles, logtype, timespan, cached_ips_file):
                     continue   
                 elif not re.match("\d+\.\d+\.\d+\.\d+",ip):
                     print '\n malformed ip:'
+                    print 'ip : ' + ip 
                     print filename, line             
                     continue                               
                                                                
