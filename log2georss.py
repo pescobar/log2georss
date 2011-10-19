@@ -272,7 +272,8 @@ def parse_log(logsdir, logfiles, logtype, timespan, cached_ips_file):
                 if logtype == 'ssh':
                     # only process lines like
                     # Oct 14 00:26:26 raphael sshd[25210]: Accepted password for user from 127.0.0.1
-                    if (re.search("Accepted", line) and re.search("sshd",line)):
+                    #if (re.search("Accepted", line) and re.search("sshd",line)):
+                    if ("Accepted" in line and "sshd" in line):
                         # no year in auth.log so we take current year
                         year = datetime.datetime.now().year
                         ip = line.split('from')[1].split()[0]
