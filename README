@@ -1,7 +1,7 @@
 
 log2georss v0.01
 http://gitorious.org/log2georss
-pablo AATT barrabin D0T org
+pescobar001 AT gmail DOT com
 ####################
 
 Script to parse a log file and generate a georss file showing latitude, longitude, country and city of ips registered in the log. Supports apache access.log and sshd auth.log
@@ -13,7 +13,7 @@ Since ipinfodb.com api change you need to register on the website to get an api 
 Install		
 ###################
 You only need python and the pyrss2gen module (apt-get install python-pyrss2gen in debian-based systems).
-This script has only been tested in linux (ubuntu with python 2.6 and debian lenny with python 2.5)
+This script has only been tested in linux (ubuntu with python 2.6 and debian lenny with python 2.5). Any feedback about testing in other environments is welcome.
 
 
 Usage
@@ -42,5 +42,5 @@ Support gzip files. Python gzip modules doesn´t alow to seek to last position t
 
 
 Feedback is welcome.
-pablo AATT barrabin D0T org
+pescobar001 AT gmail DOT com
 
