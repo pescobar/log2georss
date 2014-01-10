@@ -13,7 +13,7 @@
 #   http://www.gnu.org/licenses/
 
 
-#   http://gitorious.org/log2georss
+#   https://github.com/pescobar/log2georss
 
 
 import optparse, sys, os, time, gzip, re, cPickle, datetime
@@ -426,7 +426,7 @@ def generate_georss(accessDict, logname, logtype, rssitemtitle, georssitemlink, 
     # create georss 
     rss = GeoRSS(
        title = "georss  " + logname,
-       link = "http://gitorious.org/log2georss",
+       link = "https://github.com/pescobar/log2georss",
        description = "Feed showing location of ips registered in the log " +\
        logname,
 

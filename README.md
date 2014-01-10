@@ -1,6 +1,6 @@
 
 log2georss v0.01
-http://gitorious.org/log2georss
+https://github.com/pescobar/log2georss
 pescobar001 AT gmail DOT com
 ####################
 
